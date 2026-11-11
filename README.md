@@ -15,7 +15,7 @@ l.master(\saturation, 4); // set the master saturation amount (1 - 99)
 
 Pdef(\a,
     Pbind(
-        \sound, \sine,
+        \sound, Prand([\sine, \pulse], inf),
         \ctranspose, Prand([0, -12, 12], inf),
         \note, Prand([0, 3, 5, 8, 10], inf),
         \rel, 3,
