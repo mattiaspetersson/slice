@@ -25,13 +25,17 @@ SLiCE {
 			masterBus = Bus.audio(server, 2);
 			reverbBus = Bus.audio(server, 2);
 
-			pathToSounds = pathToSounds ? PathName(thisProcess.nowExecutingPath).pathOnly ++ "sounds";
+			/*pathToSounds = pathToSounds ? PathName(thisProcess.nowExecutingPath).pathOnly ++ "sounds";
 			PathName(pathToSounds).entries.do{|file|
 				var sf = SoundFile.new;
 				if(sf.openRead( file.fullPath )) {
 					sf.close;
 					buffers[file.fileNameWithoutExtension.asSymbol] = Buffer.read(server, file.fullPath);
 				};
+			};*/
+
+			if(pathToSounds.isKindOf(String)) {
+				this.addSound(nil, pathToSounds);
 			};
 
 			server.sync;
