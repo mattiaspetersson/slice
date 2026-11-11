@@ -17,11 +17,12 @@ code::
 \vibratoRate // vibrato rate in number of beats
 \fmFreq // frequency modulation frequency in Hz
 \fmAmt // frequency modulation amount (bipolar deviation from base frequency in Hz)
+\pulseWidth // pulse width for the \pulse and \triangle sounds (0.01, 0.99)
 \tremolo // tremolo amount (0 - 1)
 \tremoloRate // tremolo rate in number of beats
 \shaper // waveshaper amount (0 - 1)
-\shaperBufA // waveshape for waveshaper buffer A (Integer values 0 - inf (the value is wrapped to the number of available buffers))
-\shaperBufB // waveshape for waveshaper buffer B (Integer values 0 - inf (the value is wrapped to the number of available buffers))
+\shaperBufA // waveshape for waveshaper buffer A (Integer values 0 - inf (the value is wrapped to the number of available buffers (currently 8)))
+\shaperBufB // waveshape for waveshaper buffer B (Integer values 0 - inf (the value is wrapped to the number of available buffers (currently 8)))
 \shaperMorph // morph between waveshaper buffer A and B (-1.0 - 1.0)
 \shaperWarp // the signal sent into the waveshapers (1.0 - 20.0)
 \pan // stereo panning (-1.0 - 1.0)
