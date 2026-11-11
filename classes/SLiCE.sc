@@ -1,6 +1,6 @@
 SLiCE {
 	var pathToSounds;
-	var server, <serverOptions, tempoClock;
+	var server, serverOptions, tempoClock;
 	var synthGroup, masterBus, reverbBus, masterSynth, buffers;
 	var midiOuts;
 	var waveshaperBuffers;
@@ -218,7 +218,7 @@ SLiCE {
 		sound.class.switch(
 			String, {
 				case(
-					{sound.isFile},
+					{PathName(sound).isFile},
 					{
 						var file = PathName(sound);
 						if(sf.openRead(file.fullPath)) {
@@ -228,7 +228,7 @@ SLiCE {
 						};
 					},
 
-					{sound.isFolder},
+					{PathName(sound).isFolder},
 					{
 						PathName(sound).entries.do{|file|
 							if(sf.openRead(file.fullPath)) {
