@@ -5,9 +5,12 @@ SLiCE {
 	var midiOuts;
 	var waveshaperBuffers;
 	var currentlyLoadedSynthDefs;
+	classvar instance;
 
 	*new {|pathToSounds|
-		^super.newCopyArgs(pathToSounds).init;
+		if(instance.isNil) { // run as a singleton
+			super.newCopyArgs(pathToSounds).init; ^instance = this
+		} { "There can be only one SLiCE!".warn; ^instance; };
 	}
 
 	init {
