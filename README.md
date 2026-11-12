@@ -3,6 +3,11 @@ SLiCE is a Simple Live Coding Environment, that provides a simplified framework 
 
 The main difference to working with regular patterns and events is the added \sound key, that automatically sets other necessary event keys for various types of instruments. From a user perspective, one does not have think about whether the sound is a sample, a synth function, or an external MIDI instrument (although the latter is not yet implemented). Furthermore, everything is wrapped within a SynthDef providing waveshaping, beat-synced delay, resonant highpass and lowpass filters, beat-synced vibrato (FM) and tremolo (AM), saturation, and an auxiliary output for sending to a reverb in the master synth. Almost all values are clipped to stay within sane ranges and to avoid unintended sonic explosions. The master synth also contains a Limiter to further protect your ears.
 
+## Installation
+1. Install [SuperCollider](https://supercollider.github.io/)
+2. Install [SC3Plugins](https://supercollider.github.io/sc3-plugins/)
+3. Clone or download this repository and place it into the Extensions folder of your application support directory. Run the following in SuperCollider to open the folder.
+```Platform.userAppSupportDir.openOS;```
 
 ## Example
 ```
