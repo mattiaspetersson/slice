@@ -6,8 +6,13 @@ The main difference to working with regular patterns and events is the added \so
 ## Installation
 1. Install [SuperCollider](https://supercollider.github.io/)
 2. Install [SC3Plugins](https://supercollider.github.io/sc3-plugins/)
-3. Clone or download this repository and place it into the Extensions folder of your application support directory. Run the following in SuperCollider to open the folder.
-```Platform.userAppSupportDir.openOS;```
+3. Clone or download this repository and place it into the Extensions folder of your application support directory. Run the following line in SuperCollider to open the folder:
+
+    ```Platform.userAppSupportDir.openOS;```
+
+4. Recompile SuperCollider's class library. (Language->Recompile class library)
+
+Now try the example below.
 
 ## Example
 ```
