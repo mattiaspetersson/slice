@@ -9,7 +9,7 @@ SLiCE {
 
 	*new {|pathToSounds|
 		if(instance.isNil) { // run as a singleton
-			super.newCopyArgs(pathToSounds).init; ^instance = this
+			^instance = super.newCopyArgs(pathToSounds).init;
 		} { "There can be only one SLiCE!".warn; ^instance; };
 	}
 
