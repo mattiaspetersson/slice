@@ -2,9 +2,8 @@ SLiCE {
 	var pathToSounds;
 	var server, serverOptions, tempoClock;
 	var synthGroup, masterBus, reverbBus, masterSynth, buffers;
-	var midiOuts;
 	var waveshaperBuffers;
-	var currentlyLoadedSynthDefs;
+	var currentlyLoadedSynthDefs, midiInstruments, usedNames;
 	classvar instance;
 
 	*new {|pathToSounds|
@@ -20,8 +19,9 @@ SLiCE {
 		this.setServerOptions(serverOptions);
 		tempoClock = TempoClock.default;
 		buffers = Dictionary[];
-		midiOuts = Dictionary[];
+		midiInstruments = Dictionary[];
 		currentlyLoadedSynthDefs = List[];
+		usedNames = List[];
 
 		server.waitForBoot{
 			synthGroup = Group(server);
@@ -106,30 +106,12 @@ SLiCE {
 						currentEnvironment[\shaperBufB] = waveshaperBuffers[1];
 					};
 
-					// check probability and select sounds
+					// check probability and select sounds if true, else \rest
 					if([\note, \rest].wchoose(
 						[currentEnvironment[\prob], 1 - currentEnvironment[\prob]]) == \note
 					) {
-						/*if(buffers.includesKey(~sound)) {
-							currentEnvironment[\buf] = buffers[~sound].bufnum
-						};
-
-						if(buffers.includesKey(~sound)) {
-							case { buffers[~sound].numChannels == 1 } {
-								currentEnvironment[\instrument] = \samplePlayerMono
-							};
-							case { buffers[~sound].numChannels == 2 } {
-								currentEnvironment[\instrument] = \samplePlayerStereo
-							};
-						} {
-							if(SynthDescLib.global[~sound].notNil)
-							{ currentEnvironment[\instrument] = ~sound }
-							{ currentEnvironment[\type] = \rest }
-						};*/
-
-						// rewrite the above as a switch?
 						var snd, midiOut;
-						snd = buffers[~sound] ? SynthDescLib.global[~sound] ? midiOuts[~sound];
+						snd = buffers[~sound] ? SynthDescLib.global[~sound] ? midiInstruments[~sound];
 						switch(snd.class,
 							Buffer, {
 								// set the \buf key
@@ -148,10 +130,34 @@ SLiCE {
 								currentEnvironment[\instrument] = ~sound;
 							},
 
-							MIDIOut, {
+							Event, {
 								currentEnvironment[\type] = \midi;
-								currentEnvironment[\midiout] = midiOuts[~sound];
+								currentEnvironment[\midiout] = midiInstruments[~sound][\midiOut];
 								currentEnvironment[\chan] = ~chan ? 0;
+
+								server.bind{midiInstruments[~sound][\hwInputSynth].set(
+									\beatDur, currentEnvironment[\beatDur],
+									\eventDur, currentEnvironment[\eventDur],
+									\pan, ~pan ? 0,
+									\lpf, ~lpf ? 16000,
+									\lpr, ~lpr ? 0.1,
+									\hpf, ~hpf ? 20,
+									\hpr, ~hpr ? 0.1,
+									\saturation, ~saturation ? 1.0,
+									\reverb, ~reverb ? 0.0,
+									\delTime, ~delTime ? 0.5,
+									\delFbTime, ~delFbTime ? 3,
+									\delay, ~delay ? 0,
+									\vibrato, ~vibrato ? 0,
+									\vibratoRate, ~vibratoRate ? 6,
+									\tremolo, ~tremolo ? 0,
+									\tremoloRate, ~tremoloRate ? 4,
+									\shaper, ~shaper ? 0,
+									\shaperBufA, currentEnvironment[\shaperBufA],
+									\shaperBufB, currentEnvironment[\shaperBufB],
+									\shaperMorph, ~shaperMorph ? 0,
+									\shaperWarp, ~shaperWarp ? 1
+								)};
 							},
 
 							// if nothing matches set \type to \rest
@@ -204,10 +210,8 @@ SLiCE {
 		tempoClock.tempo = bpm/60;
 	}
 
-	addSound {|name, sound, format = \mono|
-		var sf = SoundFile.new, n;
-
-		// check names!
+	addSound {|name, sound, format = \mono, hwInput|
+		var sf = SoundFile.new, n, c;
 
 		sound.class.switch(
 			String, {
@@ -248,8 +252,39 @@ SLiCE {
 				currentlyLoadedSynthDefs.add(name); // not very safe! Should only happen if the above succeeded.
 			},
 
-			MIDIOut, {
-				midiOuts[name] = sound;
+			MIDIEndPoint, {
+				if(midiInstruments[name].notNil) {
+					if(midiInstruments[name][\hwInputSynth].notNil) {
+						midiInstruments[name][\hwInputSynth].free;
+					};
+				};
+
+				midiInstruments[name] = (
+					midiOut: MIDIOut.newByName(sound.device, sound.name).latency_(server.latency),
+					hwInput: hwInput
+				);
+
+				if(hwInput.isInteger) {
+					if(format == \mono) {
+						midiInstruments[name][\hwInputSynth] = Synth(\hwInputMono, [
+							\hwInBus, midiInstruments[name][\hwInput],
+							\out, masterBus,
+							\reverbOut, reverbBus,
+							\amp, 1.0,
+							\done, 0
+						], synthGroup);
+					} {
+						midiInstruments[name][\hwInputSynth] = Synth(\hwInputStereo, [
+							\hwInBus, midiInstruments[name][\hwInput],
+							\out, masterBus,
+							\reverbOut, reverbBus,
+							\amp, 1.0,
+							\done, 0
+						], synthGroup);
+					};
+				}{
+					"No hwInput set. Sending MIDI, without allocating an audio return synth.".warn;
+				};
 			},
 
 			{
@@ -258,26 +293,47 @@ SLiCE {
 • a path to a folder of soundfiles, or,
 • a synth function following the format:
 {|freq, gate, atk, rel, buf, loop, ... additionalArgs ...|
-SinOscFB.ar(freq, fb, 0.2);
-}".postln;
+SinOscFB.ar(freq, \\fb.kr(0), 0.2);
+};
+• a MIDIEndPoint representing a hardware synth, \stereo or \mono,
+and the input channel index the synth is connected to.".postln;
 			};
 		);
+
 	}
 
 	listSounds {
 		buffers.keysDo{|name|
+			usedNames.add(name);
 			("\% (sample)").format(name).postln;
 		};
 
 		currentlyLoadedSynthDefs.do{|name|
-			if(name != \samplePlayerMono and: {name != \samplePlayerStereo}) {
+			usedNames.add(name);
+			if(name != \samplePlayerMono and: {name != \samplePlayerStereo} and: {name != \hwInputMono} and: {name != \hwInputStereo}) {
 				("\% (synth)").format(name).postln;
-			}
+			};
+		};
+
+		midiInstruments.keysDo{|name|
+			usedNames.add(name);
+			("\% (midi)").format(name).postln;
 		};
 	}
 
-	listParams {
+	checkNames {
+		buffers.keysDo{|name|
+			usedNames.add(name);
+		};
 
+		currentlyLoadedSynthDefs.do{|name|
+			usedNames.add(name);
+		};
+
+		midiInstruments.keysDo{|name|
+			usedNames.add(name);
+		};
+		^usedNames;
 	}
 
 	master {|par, val|
@@ -372,6 +428,22 @@ SinOscFB.ar(freq, fb, 0.2);
 					);
 					sig;
 				}, \stereo
+			],
+
+			\hwInputStereo: [
+				{|freq, gate, atk, rel, buf, loop|
+					var sig, in = \hwInBus.kr(0);
+					sig = SoundIn.ar([in, in+1]);
+					sig = FreqShift.ar(sig, freq.clip(0.0, 20000.0));
+				}, \stereo
+			],
+
+			\hwInputMono: [
+				{|freq, gate, atk, rel, buf, loop|
+					var sig, in = \hwInBus.kr(0);
+					sig = SoundIn.ar([in]);
+					sig = FreqShift.ar(sig, freq.clip(0.0, 20000.0));
+				}, \mono
 			]
 		);
 	}
@@ -383,7 +455,7 @@ SinOscFB.ar(freq, fb, 0.2);
 			filter = 1, lpf = 16000, lpr = 0.1, hpf = 20, hpr = 0.1, saturation = 1.0,
 			reverb = 0.0, delTime = 0.5, delFbTime = 3, delay = 0,
 			vibrato = 0, vibratoRate = 6, tremolo = 0, tremoloRate = 4, beatDur = 1, eventDur = 1,
-			shaper = 0, shaperBufA, shaperBufB, shaperMorph = 0, shaperWarp = 1;
+			shaper = 0, shaperBufA, shaperBufB, shaperMorph = 0, shaperWarp = 1, done = 2;
 			// note: the beatDur and eventDur should be reported by a function in the pattern!
 
 			var g = gate, f = freq, a = atk, r = rel, b = buf, l = loop;
@@ -392,7 +464,7 @@ SinOscFB.ar(freq, fb, 0.2);
 			env = EnvGen.ar(Env.asr(atk, 1, rel), gate + Impulse.kr(0));
 
 			// handle the doneAction separately due to the delay
-			Line.kr(0, 1, beatDur * (eventDur + delTime + delFbTime), doneAction: 2);
+			Line.kr(0, 1, beatDur * (eventDur + delTime + delFbTime), doneAction: done);
 
 			// vibrato / freq modulation
 			f = f + SinOsc.ar(vibratoRate * beatDur.reciprocal, 0, vibrato);

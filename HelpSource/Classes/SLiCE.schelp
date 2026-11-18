@@ -6,7 +6,7 @@ related:: Classes/Event, Classes/Pattern, Classes/Pbind, Classes/Pdef
 DESCRIPTION::
 SLiCE is a Simple Live Coding Environment, that provides a simplified framework for pattern interaction by adding useful default values and a streamlined link::Classes/SynthDef:: factory. It adds default values to link::Classes/Event::'s \note type; i.e., do not change the \type in the patterns you write within SLiCE.
 
-The main difference to working with regular patterns and events is the added \sound key, that automatically sets other necessary event keys for various types of instruments. From a user perspective, one does not have think about whether the sound is a sample, a synth function, or an external MIDI instrument (although the latter is not yet fully implemented). Furthermore, everything is wrapped within a link::Classes/SynthDef:: providing waveshaping, beat-synced delay, resonant highpass and lowpass filters, beat-synced vibrato (FM) and tremolo (AM), saturation, and an auxiliary output for sending to a reverb in the master synth. Almost all values are clipped to stay within sane ranges and to avoid unintended sonic explosions. The master synth also contains a link::Classes/Limiter:: to further protect your ears.
+The main difference to working with regular patterns and events is the added \sound key, that automatically sets other necessary event keys for various types of instruments. From a user perspective, one does not have think about whether the sound is a sample, a synth function, or an external MIDI instrument. Furthermore, everything is wrapped within a link::Classes/SynthDef:: providing waveshaping, beat-synced delay, resonant highpass and lowpass filters, beat-synced vibrato (FM) and tremolo (AM), saturation, and an auxiliary output for sending to a reverb in the master synth. Almost all values are clipped to stay within sane ranges and to avoid unintended sonic explosions. The master synth also contains a link::Classes/Limiter:: to further protect your ears.
 
 
 SUBSECTION:: Discussion
@@ -69,7 +69,7 @@ The available default synth functions are:
 code::
 \sine, \saw, \pulse, \triangle, \whiteNoise, \pinkNoise, \brownNoise
 ::
-There are also two synth functions for playing mono or stereo samples. These are selected automatically whenever the pattern event's \sound key refers to a sample buffer.
+There are also two synth functions for playing mono or stereo samples. These are selected automatically whenever the pattern event's \sound key refers to a sample buffer. Additionaly, two synth functions provide hardware inputs in mono or stereo.
 
 METHOD:: buildSynthDefs
 Private method for building a link::Classes/SynthDef:: using link::Classes/SynthDef::.wrap. Can be used directly, but it is preferable to use the .addSound method to add new synthdef functions instead.
@@ -85,6 +85,8 @@ argument:: sound
 The sound can be a path to a single soundfile, a path to a folder of soundfiles, an ugenGraphFunc to be wrapped into the main link::Classes/SynthDef::, or a link::Classes/MIDIEndPoint::.
 argument:: format
 Mono or stereo sound.
+argument:: hwInput
+The (hardware) input channel index that an external MIDI synth can be connected to.
 
 SUBSECTION:: Discussion
 
@@ -104,8 +106,12 @@ l.addSound(\blip, {|freq|
 	sig = Blip.ar(blip, \numHarm.kr(9));
 });
 
+// add a MIDI instrument that connected to input 4 on the sound card
+// and listens to MIDI sent on the MIDIEndPoint
+l.addSound(\pno, MIDIEndPoint("mioXL", "HST 2"), \stereo, 4);
+
 p = Pbind(
-	\sound, Prand([\kick, \blip]),
+	\sound, Prand([\kick, \blip, \pno]),
 	\numHarm, Pwhite(0, 10)
 ).play;
 ::
