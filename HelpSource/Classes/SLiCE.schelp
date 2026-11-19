@@ -110,6 +110,7 @@ l.addSound(\blip, {|freq|
 // and listens to MIDI sent on the MIDIEndPoint
 l.addSound(\pno, MIDIEndPoint("mioXL", "HST 2"), \stereo, 4);
 
+// play the newly added sounds
 p = Pbind(
 	\sound, Prand([\kick, \blip, \pno]),
 	\numHarm, Pwhite(0, 10)
@@ -134,9 +135,6 @@ Set the tempo in BPM.
 
 METHOD:: listSounds
 Lists the currently loaded sounds by name.
-
-METHOD:: listParams
-Lists the currently available parameter space. ToDo!
 
 METHOD:: setServerOptions
 argument:: aServerOptions
