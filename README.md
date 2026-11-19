@@ -12,6 +12,11 @@ The main difference to working with regular patterns and events is the added \so
 
 4. Recompile SuperCollider's class library. (Language->Recompile class library)
 
+Or:
+Install using the Quarks system by running this line in SuperCollider:
+
+```Quarks.install(https://github.com/mattiaspetersson/slice.git);```
+
 Now try the example below.
 
 ## Example
