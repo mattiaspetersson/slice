@@ -1,0 +1,10 @@
+(
+name: "SLiCE",
+path: "slice",
+summary: "a Simple Live Coding Environment for Supercollider",
+author:	"Mattias Petersson",
+version: 0.9,
+helpdoc: "slice-help/slice.html",
+dependencies: [],
+license: "GPL"
+)

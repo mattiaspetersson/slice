@@ -1,0 +1,25 @@
+TITLE:: Slc
+summary:: Simple wrapper for SLiCE that returns a Pdef/Pbind combo.
+categories:: Live Coding, Patterns
+related:: Classes/SLiCE, Classes/Pdef, Classes/Pbind
+
+DESCRIPTION::
+A simple addition to the SLiCE live coding environmen that saves us from having to write the very useful Pdef/Pbind combination.
+
+Usage:
+code::
+Slc(
+	\name,
+	\note, Pseq([0, 1, 2, 3], inf)
+).play;
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+argument:: key
+A unique identifier symbol for the pattern.
+argument:: ... args
+Key-value pairs for the Pbind.new
+
+See the documentation for Pdef and Pbind for more detailed info.

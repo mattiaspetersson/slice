@@ -1,0 +1,86 @@
+TITLE:: SlcMod
+summary:: Adapter for seamless use of Node Proxies as control inputs in SLiCE patterns.
+categories:: Live Coding, Patterns
+related:: Classes/SLiCE, Classes/Ndef
+
+DESCRIPTION::
+Adapter class that promotes the use of Node Proxies as modulators in patterns. As part of the SLiCE live coding environment, it automatically converts an Ndef output to a relevant modulator. From a user perspective, a defined Ndef will be automatically converted to a server side-control or audio rate modulator, or a lang-side OSC modulator where appropriate.
+
+CLASSMETHODS::
+
+METHOD:: all
+A dictionary of all currently active SlcMods.
+
+METHOD:: initClass
+
+METHOD:: new
+Returns a new SlcMod, comprised of an Ndef, a Synth that reads the Ndef's bus and sends the data back to the language.
+argument:: key
+A unique identifier symbol for the SlcMod (and the Ndef).
+argument:: func
+The Ndef symth function.
+argument:: rate
+The update frequency of the reader synth.
+
+
+INSTANCEMETHODS::
+
+METHOD:: consumers
+A List of pattern parameter names that is modulated by this SlcMod.
+
+METHOD:: updateNdef
+Private method that updates the embedded Ndef function when the SlcMod is changed and re-run.
+
+METHOD:: replyID
+A UniqueID, used by the receiving OSCdef in the SLiCE pattern. Set automatically.
+
+METHOD:: key
+The unique identifier symbol of the SlcMod.
+
+METHOD:: oscKey
+The unique identifier symbol used by the receiving OSCdef.
+
+METHOD:: init
+
+METHOD:: free
+Frees the SlcMod, its embedded Ndef, the reader synth, and the receiving OSCdef.
+
+METHOD:: ndef
+Returns the embedded Ndef of the SlcMod.
+
+
+EXAMPLES::
+
+code::
+l = SLiCE(); // start SLiCE
+
+// add a sound of the MIDI instrument type.
+// here, assuming a running Korg Polysix plugin, listening on the IAC Driver Bus 1.
+// add one or more controllers as an event of (arbitrary) key-value pairs representing
+// parameter names and MIDI CC numbers.
+(
+l.addSound(
+	\polysix,
+	MIDIEndPoint("IAC Driver", "Bus 1"),
+	\stereo,
+	nil,
+	(p6filterFreq: 34)
+);
+)
+
+(
+Slc(\a,
+	\sound, \polysix,
+	\ctranspose, Prand([0, -12, 12], inf),
+	\note, Prand([0, 3, 5, 8, 10], inf),
+	// use the MIDI CC in the pattern and modulate it using a SlcMod.
+	\p6filterFreq, SlcMod(\filterLfo, {SinOsc.ar(0.8).range(20, 40)}),
+	\reverb, 0.3,
+	\reverse, 0,
+	\amp, Pwhite(0.4, 1.0),
+	\dur, 0.25
+).play;
+)
+
+Slc(\a).stop
+::
