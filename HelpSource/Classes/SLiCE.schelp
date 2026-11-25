@@ -87,6 +87,10 @@ argument:: format
 Mono or stereo sound.
 argument:: hwInput
 The (hardware) input channel index that an external MIDI synth can be connected to.
+Optional. Set to nil for playing the synth without passing it through the SLiCE wrapper synth.
+argument:: controllers
+An (optional) link::Classes/Event:: defining a set of MIDI CC:s for this sound, if it is a MIDI instrument. The key-value pairs are parameter names and controller numbers. See below for usage.
+
 
 SUBSECTION:: Discussion
 
@@ -107,13 +111,16 @@ l.addSound(\blip, {|freq|
 });
 
 // add a MIDI instrument that connected to input 4 on the sound card
-// and listens to MIDI sent on the MIDIEndPoint
-l.addSound(\pno, MIDIEndPoint("mioXL", "HST 2"), \stereo, 4);
+// and listens to MIDI sent on the MIDIEndPoint. An arbitrary link::Classes/Event::
+// defining control change parameter names and numbers could also be added.
+l.addSound(\pno, MIDIEndPoint("mioXL", "HST 2"), \stereo, 4, (filterFreq: 27, releaseTime: 36));
 
-// play the newly added sounds
+// play the newly added sounds and set the parameters
 p = Pbind(
 	\sound, Prand([\kick, \blip, \pno]),
-	\numHarm, Pwhite(0, 10)
+	\numHarm, Pwhite(0, 10),
+	\filterFreq, Pwhite(900, 9000)
+	\releaseTime, Pwhite(1.0, 3.5)
 ).play;
 ::
 

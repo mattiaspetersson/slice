@@ -1,10 +1,10 @@
 SLiCE {
 	var pathToSounds;
-	var server, serverOptions, tempoClock;
+	var <server, serverOptions, tempoClock;
 	var synthGroup, masterBus, reverbBus, masterSynth, buffers;
 	var waveshaperBuffers;
 	var currentlyLoadedSynthDefs, midiInstruments, usedNames;
-	classvar instance;
+	classvar <instance;
 
 	*new {|pathToSounds|
 		if(instance.isNil) { // run as a singleton
@@ -79,6 +79,18 @@ SLiCE {
 				Out.ar(0, Limiter.ar(sig));
 			}).add;
 
+			// OSC SlcMod Reader SynthDef.
+			SynthDef(\slcModReader, {|bus = 0, replyID = 0, rate = 30|
+				var sig = In.ar(bus, 1); // expects incoming bipolar modulators ranging between -1 - 1.
+
+				SendReply.ar(
+					Impulse.ar(rate),
+					'/slcMod',
+					sig,
+					replyID
+				);
+			}).add;
+
 			server.sync;
 
 			masterSynth = Synth.after(synthGroup, \master, [\in, masterBus, \revIn, reverbBus]);
@@ -134,6 +146,47 @@ SLiCE {
 								currentEnvironment[\type] = \midi;
 								currentEnvironment[\midiout] = midiInstruments[~sound][\midiOut];
 								currentEnvironment[\chan] = ~chan ? 0;
+
+								if(midiInstruments[~sound][\controllers].isKindOf(Event)) {
+									midiInstruments[~sound][\controllers].keysValuesDo{|k, v|
+										if(currentEnvironment[k].notNil) {
+											if(currentEnvironment[k].class == SlcMod) {
+												// these has to be declared due to the OSCdef's other environment
+												var slcMod = currentEnvironment[k];
+												var id = slcMod.replyID;
+												var oscKey = slcMod.oscKey;
+												var instr = midiInstruments[~sound][\midiOut];
+												var chan = currentEnvironment[\chan];
+
+												// add this controller to the SlcMod's consumers Dictionary
+												slcMod.consumers.add(k);
+
+												OSCdef(oscKey, {|msg|
+													if(msg[2] == id) {
+														//value = msg[3];
+															instr.control(
+															chan,
+															v,
+															msg[3] //.asInteger,
+														);
+													};
+												}, '/slcMod');
+											} {
+												SlcMod.all.keysValuesDo{|slcModKey, slcMod|
+													if(slcMod.notNil and: {slcMod.consumers.includes(k)}) {
+														slcMod.free;
+													};
+												}; // if there was a slcMod here previously; free it!
+
+												midiInstruments[~sound][\midiOut].control(
+													currentEnvironment[\chan],
+													v,
+													currentEnvironment[k].postln
+												);
+											};
+										};
+									};
+								};
 
 								server.bind{midiInstruments[~sound][\hwInputSynth].set(
 									\beatDur, currentEnvironment[\beatDur],
@@ -210,7 +263,7 @@ SLiCE {
 		tempoClock.tempo = bpm/60;
 	}
 
-	addSound {|name, sound, format = \mono, hwInput|
+	addSound {|name, sound, format = \mono, hwInput, controllers|
 		var sf = SoundFile.new, n, c;
 
 		sound.class.switch(
@@ -261,8 +314,15 @@ SLiCE {
 
 				midiInstruments[name] = (
 					midiOut: MIDIOut.newByName(sound.device, sound.name).latency_(server.latency),
-					hwInput: hwInput
+					hwInput: hwInput,
+					controllers: ()
 				);
+
+				if(controllers.isKindOf(Event)) {
+					controllers.keysValuesDo{|k, v|
+						midiInstruments[name][\controllers][k] = v;
+					};
+				};
 
 				if(hwInput.isInteger) {
 					if(format == \mono) {
@@ -299,6 +359,9 @@ SinOscFB.ar(freq, \\fb.kr(0), 0.2);
 and the input channel index the synth is connected to.".postln;
 			};
 		);
+	}
+
+	removeSound {|name|
 
 	}
 
@@ -310,7 +373,10 @@ and the input channel index the synth is connected to.".postln;
 
 		currentlyLoadedSynthDefs.do{|name|
 			usedNames.add(name);
-			if(name != \samplePlayerMono and: {name != \samplePlayerStereo} and: {name != \hwInputMono} and: {name != \hwInputStereo}) {
+			if(name != \samplePlayerMono
+				and: {name != \samplePlayerStereo}
+				and: {name != \hwInputMono}
+				and: {name != \hwInputStereo}) {
 				("\% (synth)").format(name).postln;
 			};
 		};
