@@ -151,7 +151,7 @@ SLiCE {
 									midiInstruments[~sound][\controllers].keysValuesDo{|k, v|
 										if(currentEnvironment[k].notNil) {
 											if(currentEnvironment[k].class == SlcMod) {
-												// these has to be declared due to the OSCdef's other environment
+												// these need to be declared here due to the OSCdef's other environment(?)
 												var slcMod = currentEnvironment[k];
 												var id = slcMod.replyID;
 												var oscKey = slcMod.oscKey;
@@ -191,25 +191,25 @@ SLiCE {
 								server.bind{midiInstruments[~sound][\hwInputSynth].set(
 									\beatDur, currentEnvironment[\beatDur],
 									\eventDur, currentEnvironment[\eventDur],
-									\pan, ~pan ? 0,
-									\lpf, ~lpf ? 16000,
-									\lpr, ~lpr ? 0.1,
-									\hpf, ~hpf ? 20,
-									\hpr, ~hpr ? 0.1,
-									\saturation, ~saturation ? 1.0,
-									\reverb, ~reverb ? 0.0,
-									\delTime, ~delTime ? 0.5,
-									\delFbTime, ~delFbTime ? 3,
-									\delay, ~delay ? 0,
-									\vibrato, ~vibrato ? 0,
-									\vibratoRate, ~vibratoRate ? 6,
-									\tremolo, ~tremolo ? 0,
-									\tremoloRate, ~tremoloRate ? 4,
-									\shaper, ~shaper ? 0,
+									\pan, SlcMod.audioMod(currentEnvironment, \pan, 0),
+									\lpf, SlcMod.audioMod(currentEnvironment, \lpf, 16000),
+									\lpr, SlcMod.audioMod(currentEnvironment, \lpr, 0.1),
+									\hpf, SlcMod.audioMod(currentEnvironment, \lpf, 20),
+									\hpr, SlcMod.audioMod(currentEnvironment, \hpr, 0.1),
+									\saturation, SlcMod.audioMod(currentEnvironment, \saturation, 1.0),
+									\reverb, SlcMod.audioMod(currentEnvironment, \reverb, 0.0),
+									\delTime, SlcMod.audioMod(currentEnvironment, \delTime, 0.5),
+									\delFbTime, SlcMod.audioMod(currentEnvironment, \delFbTime, 3),
+									\delay, SlcMod.audioMod(currentEnvironment, \delay, 0.0),
+									\vibrato, SlcMod.audioMod(currentEnvironment, \vibrato, 0.0),
+									\vibratoRate, SlcMod.audioMod(currentEnvironment, \vibratoRate, 6.0),
+									\tremolo, SlcMod.audioMod(currentEnvironment, \tremolo, 0.0),
+									\tremoloRate, SlcMod.audioMod(currentEnvironment, \tremoloRate, 4.0),
+									\shaper, SlcMod.audioMod(currentEnvironment, \shaper, 0.0),
 									\shaperBufA, currentEnvironment[\shaperBufA],
 									\shaperBufB, currentEnvironment[\shaperBufB],
-									\shaperMorph, ~shaperMorph ? 0,
-									\shaperWarp, ~shaperWarp ? 1
+									\shaperMorph, SlcMod.audioMod(currentEnvironment, \shaperMorph, 0.0),
+									\shaperWarp, SlcMod.audioMod(currentEnvironment, \shaperWarp, 1.0)
 								)};
 							},
 
